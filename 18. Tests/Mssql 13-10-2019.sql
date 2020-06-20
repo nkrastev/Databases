@@ -27,10 +27,10 @@ BEGIN
 	DECLARE @TotalCommits INT;
 	
 	SET @UserId=(SELECT Id FROM Users WHERE Username LIKE @username);
-	SET @TotalCommits=(SELECT Count(ContributorId) From Commits);
+	SET @TotalCommits=(SELECT Count(ContributorId) From Commits WHERE ContributorId=@UserId);
     
 RETURN @TotalCommits
 END
 
 SELECT dbo.udf_UserTotalCommits('UnderSinduxrein')
-SELECT Count(2) From Commits
+SELECT Count(ContributorId) From Commits
