@@ -13,6 +13,7 @@ namespace ProductShop
         public static void Main(string[] args)
         {
             var db = new ProductShopContext();
+            
             db.Database.EnsureDeleted();
             Console.WriteLine("Database was successfully deleted!");
             db.Database.EnsureCreated();
@@ -23,6 +24,7 @@ namespace ProductShop
             string inputJsonCategories = File.ReadAllText("..\\..\\..\\Datasets\\categories.json");
             string inputJsonCategoriesProducts = File.ReadAllText("..\\..\\..\\Datasets\\categories-products.json");
 
+            //Data Import
             //task 1
             Console.WriteLine(ImportUsers(db, inputJsonUsers));
             //task 2
@@ -33,8 +35,35 @@ namespace ProductShop
             Console.WriteLine(ImportCategoryProducts(db, inputJsonCategoriesProducts));
 
 
+            //task 5
+            Console.WriteLine(GetProductsInRange(db));
+
         }
 
+
+
+
+        //Export Methods
+        public static string GetProductsInRange(ProductShopContext context)
+        {
+            var products = context
+                .Products
+                .Where(x => x.Price >= 500 && x.Price <= 1000)
+                .Select(x => new
+                {                         
+                    name = x.Name,
+                    price = x.Price,
+                    seller = $"{x.Seller.FirstName} {x.Seller.LastName}"                   
+                })
+                .OrderBy(x=>x.price)
+                .ToList();
+
+            string output = JsonConvert.SerializeObject(products, Formatting.Indented);
+            return output;
+        }
+
+
+        //Import Methods
         public static string ImportCategoryProducts(ProductShopContext context, string inputJson)
         {
             List<CategoryProduct> mappingCategoryProduct = JsonConvert.DeserializeObject<List<CategoryProduct>>(inputJson);
