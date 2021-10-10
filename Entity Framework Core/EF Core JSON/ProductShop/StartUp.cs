@@ -13,8 +13,8 @@ namespace ProductShop
         public static void Main(string[] args)
         {
             var db = new ProductShopContext();
-            
-            db.Database.EnsureDeleted();
+
+            /*db.Database.EnsureDeleted();
             Console.WriteLine("Database was successfully deleted!");
             db.Database.EnsureCreated();
             Console.WriteLine("Database was successfully created!");
@@ -32,11 +32,18 @@ namespace ProductShop
             //task 3
             Console.WriteLine(ImportCategories(db, inputJsonCategories));
             //task 4
-            Console.WriteLine(ImportCategoryProducts(db, inputJsonCategoriesProducts));
+            Console.WriteLine(ImportCategoryProducts(db, inputJsonCategoriesProducts));*/
 
 
             //task 5
-            Console.WriteLine(GetProductsInRange(db));
+            //Console.WriteLine(GetProductsInRange(db));
+
+            //task 6
+            //Console.WriteLine(GetSoldProducts(db));
+
+            //task 7
+            Console.WriteLine(GetCategoriesByProductsCount(db));
+
 
         }
 
@@ -44,6 +51,49 @@ namespace ProductShop
 
 
         //Export Methods
+
+        public static string GetCategoriesByProductsCount(ProductShopContext context)
+        {
+            var categories = context
+                .Categories
+                .Select(x => new
+                {
+                    category = x.Name,
+                    productsCount = x.CategoryProducts.Count(),
+                    averagePrice = $"{x.CategoryProducts.Average(y => y.Product.Price):f2}",
+                    totalRevenue = $"{x.CategoryProducts.Sum(y => y.Product.Price):f2}"
+                })
+                .OrderByDescending(x => x.productsCount)
+                .ToList();
+            string output = JsonConvert.SerializeObject(categories, Formatting.Indented);
+            return output;
+        }
+
+        public static string GetSoldProducts(ProductShopContext context)
+        {
+            var users = context
+                .Users
+                .Where(x => x.ProductsSold.Any(ps => ps.Buyer != null))
+                .Select(x => new
+                {
+                    firstName = x.FirstName,
+                    lastName = x.LastName,
+                    soldProducts = x.ProductsSold.Select(y => new
+                    {
+                        name=y.Name,
+                        price=y.Price,
+                        buyerFirstName=y.Buyer.FirstName,
+                        buyerLastName=y.Buyer.LastName
+                    })
+                })
+                .OrderBy(x=>x.lastName)
+                .ThenBy(x=>x.firstName)
+                .ToList();
+
+            string output = JsonConvert.SerializeObject(users, Formatting.Indented);
+            return output;
+        }
+
         public static string GetProductsInRange(ProductShopContext context)
         {
             var products = context
