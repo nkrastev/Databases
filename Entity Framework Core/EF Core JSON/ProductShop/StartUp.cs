@@ -42,8 +42,10 @@ namespace ProductShop
             //Console.WriteLine(GetSoldProducts(db));
 
             //task 7
-            Console.WriteLine(GetCategoriesByProductsCount(db));
+            //Console.WriteLine(GetCategoriesByProductsCount(db));
 
+            //task 8
+            Console.WriteLine(GetUsersWithProducts(db));
 
         }
 
@@ -51,6 +53,46 @@ namespace ProductShop
 
 
         //Export Methods
+
+        public static string GetUsersWithProducts(ProductShopContext context)
+        {
+            /*System.InvalidCastException : 
+             * Unable to cast object of type 'System.Linq.Expressions.NewExpression' to type 
+             * 'System.Linq.Expressions.MethodCallExpression'.*/
+
+            var dbUsers = context
+                .Users                
+                .Where(x => x.ProductsSold.Count()>0 && x.ProductsSold.Any(y=>y.Buyer!=null))                
+                .Select(x => new
+                {
+                    lastName=x.LastName,
+                    age=x.Age,
+                    soldProducts = new
+                    {
+                        count=x.ProductsSold.Count,
+                        products =x.ProductsSold.Select(y => new { name= y.Name, price =y.Price})
+                    }
+
+                }).ToArray()
+                .OrderByDescending(x => x.soldProducts.count)
+                .ToList();            
+
+            var outputObject = new
+            {
+                usersCount = dbUsers.Count,
+                users= dbUsers
+            };
+
+            
+
+            var output = JsonConvert.SerializeObject(outputObject, new JsonSerializerSettings
+            {
+                Formatting = Formatting.Indented,
+                NullValueHandling = NullValueHandling.Ignore
+            });
+
+            return output;            
+        }
 
         public static string GetCategoriesByProductsCount(ProductShopContext context)
         {
