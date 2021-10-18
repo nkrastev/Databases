@@ -1,11 +1,13 @@
 ﻿using AutoMapper;
 using ProductShop.Data;
 using ProductShop.DTO.Input;
+using ProductShop.DTO.Output;
 using ProductShop.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 
@@ -31,6 +33,69 @@ namespace ProductShop
             //Console.WriteLine(ImportCategories(db, categoriesXml));
             //Console.WriteLine(ImportCategoryProducts(db, categoriesProductsXml));
 
+            //Console.WriteLine(GetProductsInRange(db));
+            Console.WriteLine(GetSoldProducts(db));
+
+
+        }
+
+        public static string GetSoldProducts(ProductShopContext context)
+        {
+            StringBuilder sb = new StringBuilder();
+            var namespaces = new XmlSerializerNamespaces();
+            namespaces.Add(string.Empty, string.Empty);
+
+            var users = context
+                .Users
+                .Where(x => x.ProductsSold.Count > 0)
+                .Select(x => new ExportUserSoldProducts
+                {
+                    FirstName = x.FirstName,
+                    LastName = x.LastName,
+                    SoldProducts = x.ProductsSold.Select(y => new ExportProductItemSold
+                    {
+                         Name = y.Name,
+                         Price = y.Price
+                     }).ToArray()
+                })
+                .OrderBy(x => x.LastName)
+                .ThenBy(x => x.FirstName)
+                .Take(5)
+                .ToArray();
+
+            //foreach (var item in users)
+            //{
+            //    Console.WriteLine(item);
+            //}
+
+            XmlSerializer xml = new XmlSerializer(typeof(ExportUserSoldProducts[]), new XmlRootAttribute("Users"));
+            xml.Serialize(new StringWriter(sb), users, namespaces);
+            return sb.ToString().TrimEnd();
+            //return null;
+        }
+
+        public static string GetProductsInRange(ProductShopContext context)
+        {
+            StringBuilder sb = new StringBuilder();
+            var namespaces = new XmlSerializerNamespaces();
+            namespaces.Add(string.Empty, string.Empty);
+
+            var products = context
+                .Products
+                .Where(x => x.Price >= 500 && x.Price <= 1000)
+                .Select(x => new ExportProductsInRange
+                {
+                    Name = x.Name,
+                    Price = x.Price,
+                    Buyer = x.Buyer.FirstName + " "+x.Buyer.LastName
+                })
+                .OrderBy(x => x.Price)
+                .Take(10)
+                .ToArray();
+
+            XmlSerializer xml = new XmlSerializer(typeof(ExportProductsInRange[]), new XmlRootAttribute("Products"));
+            xml.Serialize(new StringWriter(sb), products, namespaces);
+            return sb.ToString().TrimEnd();
         }
 
         public static string ImportCategoryProducts(ProductShopContext context, string inputXml)
