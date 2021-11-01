@@ -6,13 +6,13 @@
     {
         public Category()
         {
-            this.CategoryBooks = new HashSet<BookCategory>();
+            this.BooksCategories = new HashSet<BookCategory>();
         }
 
         public int CategoryId { get; set; }
 
         public string Name { get; set; }
 
-        public ICollection<BookCategory> CategoryBooks { get; set; }
+        public ICollection<BookCategory> BooksCategories { get; set; }
     }
 }

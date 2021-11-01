@@ -11,46 +11,50 @@ using System.Text;
 
 namespace BookShop
 {
+    
     public class StartUp
     {
         static void Main()
         {
-            //Connection to DB
-            using IDbConnection connection = new SqlConnection(Configuration.ConnectionString);
-
-            //Age Restriction            
-            /*string input = Console.ReadLine();
-            Console.WriteLine(GetBooksByAgeRestriction(connection, input));*/
-
-            //Book Titles by Category
-            string input = Console.ReadLine();
-            Console.WriteLine(GetBooksByCategory(connection, input));
-
+            try
+            {
+                //Connection to DB
+                using IDbConnection connection = new SqlConnection(Configuration.ConnectionString);
+             
+                //Book Titles with Category              
+                Console.WriteLine(GetBooksByCategory(connection));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception: " + ex.Message);
+            }
+            
         }
 
-        public static string GetBooksByCategory(IDbConnection context, string input)
-        {
-            var categoriesList = input.Split(" ", StringSplitOptions.RemoveEmptyEntries).ToList();
-            categoriesList = categoriesList.ConvertAll(d => d.ToLower());
+        public static string GetBooksByCategory(IDbConnection context)
+        {           
+            var sql = @"SELECT b.BookId, b.Title, bc.CategoryId FROM Books AS b 
+                        INNER JOIN
+                        BooksCategories AS bc ON bc.BookId = B.BookId ORDER BY b.BookId";
+            var books = context.Query<Book, BookCategory, Book>(sql,
+                (book, mappingItem) => {
+                    book.bookCategories.Add(mappingItem);
+                    return book;
+                },
+                splitOn: "CategoryId");
 
-
-
-            var sql = @"SELECT b.BookId, b.Title, c.CategoryId, c.Name
-                FROM Books AS b 
-                JOIN BooksCategories bc on bc.BookId = b.BookId
-                JOIN Categories c on c.CategoryId = bc.CategoryId";
-
-            var books = context.Query<Book>(sql);
-
-            foreach (var item in books)
-            {
-                Console.WriteLine(item.Title);
-               
-
-                Console.WriteLine("--> ");                
+            foreach (var book in books)
+            {                
+                Console.Write("BookId: "+book.BookId+" Title: "+book.Title+" | Category Ids > ");
+                foreach (var item in book.bookCategories)
+                {
+                    Console.Write(item.CategoryId+", ");                    
+                }
+                Console.WriteLine();
             }
 
-            return "";
+            Console.WriteLine();
+            return null;
         }
 
         public static string GetBooksByAgeRestriction(IDbConnection context, string command)

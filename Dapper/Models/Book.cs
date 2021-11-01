@@ -9,7 +9,7 @@ namespace BookShop.Models
     {
         public Book()
         {
-            this.BookCategories = new HashSet<BookCategory>();
+            this.bookCategories = new HashSet<BookCategory>();
         }
 
         public int BookId { get; set; }
@@ -31,6 +31,6 @@ namespace BookShop.Models
         public int AuthorId { get; set; }
         public Author Author { get; set; }
 
-        public ICollection<BookCategory> BookCategories { get; set; }
+        public ICollection<BookCategory> bookCategories { get; set; }
     }
 }
