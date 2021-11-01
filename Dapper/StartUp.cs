@@ -24,13 +24,33 @@ namespace BookShop
 
             //Book Titles by Category
             string input = Console.ReadLine();
-            Console.WriteLine(GetBooksByAgeRestriction(connection, input));
+            Console.WriteLine(GetBooksByCategory(connection, input));
 
         }
 
         public static string GetBooksByCategory(IDbConnection context, string input)
         {
-            return null;
+            var categoriesList = input.Split(" ", StringSplitOptions.RemoveEmptyEntries).ToList();
+            categoriesList = categoriesList.ConvertAll(d => d.ToLower());
+
+
+
+            var sql = @"SELECT b.BookId, b.Title, c.CategoryId, c.Name
+                FROM Books AS b 
+                JOIN BooksCategories bc on bc.BookId = b.BookId
+                JOIN Categories c on c.CategoryId = bc.CategoryId";
+
+            var books = context.Query<Book>(sql);
+
+            foreach (var item in books)
+            {
+                Console.WriteLine(item.Title);
+               
+
+                Console.WriteLine("--> ");                
+            }
+
+            return "";
         }
 
         public static string GetBooksByAgeRestriction(IDbConnection context, string command)
