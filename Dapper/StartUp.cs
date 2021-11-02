@@ -15,7 +15,8 @@ namespace BookShop
     public class StartUp
     {
         static void Main()
-        {
+        {                        
+
             try
             {
                 //Connection to DB
@@ -23,6 +24,10 @@ namespace BookShop
              
                 //Book Titles with Category              
                 Console.WriteLine(GetBooksByCategory(connection));
+
+                //Add item to Books table
+                AddItemInDatabase(connection);
+
             }
             catch (Exception ex)
             {
@@ -31,7 +36,20 @@ namespace BookShop
             
         }
 
-        public static string GetBooksByCategory(IDbConnection context)
+        private static void AddItemInDatabase(IDbConnection connection)
+        {
+            var author = new Author { FirstName = "Ivan", LastName = "Ivanov" };
+            string insertQuery = @"INSERT INTO [dbo].[Authors]([FirstName],[LastName]) VALUES (@FirstName, @LastName)";
+
+            var result = connection.Execute(insertQuery, new
+            {
+                author.FirstName,
+                author.LastName               
+            });            
+            Console.WriteLine("DB Insert Successful");
+        }
+
+        private static string GetBooksByCategory(IDbConnection context)
         {           
             var sql = @"SELECT b.BookId, b.Title, bc.CategoryId FROM Books AS b 
                         INNER JOIN
@@ -57,7 +75,7 @@ namespace BookShop
             return null;
         }
 
-        public static string GetBooksByAgeRestriction(IDbConnection context, string command)
+        private static string GetBooksByAgeRestriction(IDbConnection context, string command)
         {
             StringBuilder sb = new StringBuilder();
             var books = context.Query<Book>("SELECT * FROM Books")
