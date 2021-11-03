@@ -24,6 +24,7 @@ namespace CarDealer
                 Console.WriteLine(ImportCustomers(db, File.ReadAllText("./Datasets/customers.xml")));
                 Console.WriteLine(ImportParts(db, File.ReadAllText("./Datasets/parts.xml")));
                 Console.WriteLine(ImportCars(db, File.ReadAllText("./Datasets/cars.xml")));
+                Console.WriteLine(ImportSales(db, File.ReadAllText("./Datasets/sales.xml")));
             }
             catch (Exception ex)
             {
@@ -32,16 +33,87 @@ namespace CarDealer
             
 
         }
+        public static string ImportSales(CarDealerContext context, string inputXml)
+        {
+            
+            var serializer = new XmlSerializer(typeof(ImportSaleDto[]), new XmlRootAttribute("Sales"));
+            var importSalesDtoData = serializer.Deserialize(new StringReader(inputXml)) as ImportSaleDto[];
+
+            var allSales = importSalesDtoData.Select(x => new Sale
+            {
+                CarId = x.CarId,
+                CustomerId = x.CustomerId,
+                Discount = x.Discount
+            }).ToArray();
+
+            List<Sale> validSales = new List<Sale>();
+            var allCarIds = context.Cars.Select(x=> new{Id=x.Id}).ToList();
+            var allCustomerIds = context.Customers.Select(x=> new{Id=x.Id}).ToList();
+
+            foreach (var sale in allSales)
+            {
+                if (allCarIds.Any(x=>x.Id==sale.CarId))
+                {
+                    //Customer and Car Ids are valid... hm
+                    validSales.Add(sale);
+                }
+            }
+
+            context.AddRange(validSales);
+            context.SaveChanges();
+
+            return $"Successfully imported {context.Sales.Count()}";
+        }
 
         public static string ImportCars(CarDealerContext context, string inputXml)
         {
-            return null;
+            var serializer = new XmlSerializer(typeof(ImportCarDto[]), new XmlRootAttribute("Cars"));
+            ImportCarDto[] carsDtos = (ImportCarDto[])serializer.Deserialize(new StringReader(inputXml));
+
+            var cars = new List<Car>();
+            var partCars = new List<PartCar>();
+
+            foreach (var carDto in carsDtos)
+            {
+                var car = new Car()
+                {
+                    Make = carDto.Make,
+                    Model = carDto.Model,
+                    TravelledDistance = carDto.TravelledDistance
+                };
+
+                var parts = carDto
+                    .Parts
+                    .Where(pc => context.Parts.Any(p => p.Id == pc.PartId))
+                    .Select(p => p.PartId)
+                    .Distinct();
+
+                foreach (var part in parts)
+                {
+                    PartCar partCar = new PartCar()
+                    {
+                        PartId = part,
+                        Car = car
+                    };
+
+                    partCars.Add(partCar);
+                }
+
+                cars.Add(car);
+
+            }
+
+            context.PartCars.AddRange(partCars);
+            context.Cars.AddRange(cars);
+            context.SaveChanges();
+            return $"Successfully imported {context.Cars.Count()}";
         }
 
         public static string ImportParts(CarDealerContext context, string inputXml)
         {
             var serializer = new XmlSerializer(typeof(ImportPartDto[]), new XmlRootAttribute("Parts"));            
             var importPartDtoData = serializer.Deserialize(new StringReader(inputXml)) as ImportPartDto[];
+
 
             var parts = importPartDtoData.Select(x => new Part
             {

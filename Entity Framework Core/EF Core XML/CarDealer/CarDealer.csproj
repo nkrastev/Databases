@@ -24,6 +24,9 @@
     <None Update="Datasets\parts.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Datasets\sales.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Datasets\suppliers.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
