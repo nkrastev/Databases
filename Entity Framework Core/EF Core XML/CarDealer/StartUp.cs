@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Xml.Serialization;
 
 namespace CarDealer
@@ -17,14 +18,21 @@ namespace CarDealer
             try
             {
                 var db = new CarDealerContext();
-                db.Database.EnsureDeleted();
+
+                //Imports
+                /* db.Database.EnsureDeleted();
                 db.Database.EnsureCreated();
 
                 Console.WriteLine(ImportSuppliers(db, File.ReadAllText("./Datasets/suppliers.xml")));
                 Console.WriteLine(ImportCustomers(db, File.ReadAllText("./Datasets/customers.xml")));
                 Console.WriteLine(ImportParts(db, File.ReadAllText("./Datasets/parts.xml")));
                 Console.WriteLine(ImportCars(db, File.ReadAllText("./Datasets/cars.xml")));
-                Console.WriteLine(ImportSales(db, File.ReadAllText("./Datasets/sales.xml")));
+                Console.WriteLine(ImportSales(db, File.ReadAllText("./Datasets/sales.xml")));*/
+
+                //Exports
+
+                Console.WriteLine(GetCarsWithDistance(db));
+
             }
             catch (Exception ex)
             {
@@ -33,6 +41,34 @@ namespace CarDealer
             
 
         }
+
+        public static string GetCarsWithDistance(CarDealerContext context)
+        {
+            //all cars with distance more than 2,000,000. Order them by make, then by model alphabetically. Take top 10 
+            var cars = context
+                .Cars
+                .Where(x => x.TravelledDistance > 2000000)
+                .OrderBy(x => x.Make)
+                .ThenBy(x => x.Model)
+                .Take(10)
+                .Select(x=> new ExportCarDto
+                {
+                    Make=x.Make,
+                    Model=x.Model,
+                    TravelledDistance=x.TravelledDistance
+                })
+                .ToArray();
+
+            StringBuilder sb = new StringBuilder();
+            var namespaces = new XmlSerializerNamespaces();
+            namespaces.Add(string.Empty, string.Empty);
+
+            XmlSerializer xml = new XmlSerializer(typeof(ExportCarDto[]), new XmlRootAttribute("cars"));
+            xml.Serialize(new StringWriter(sb), cars, namespaces);
+            return sb.ToString().TrimEnd();
+            
+        }
+
         public static string ImportSales(CarDealerContext context, string inputXml)
         {
             
