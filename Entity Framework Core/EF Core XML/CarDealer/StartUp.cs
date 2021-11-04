@@ -31,7 +31,8 @@ namespace CarDealer
 
                 //Exports
 
-                Console.WriteLine(GetCarsWithDistance(db));
+                //Console.WriteLine(GetCarsWithDistance(db));
+                Console.WriteLine(GetCarsFromMakeBmw(db));
 
             }
             catch (Exception ex)
@@ -40,6 +41,31 @@ namespace CarDealer
             }
             
 
+        }
+
+        public static string GetCarsFromMakeBmw(CarDealerContext context)
+        {
+            //all cars from make BMW and order them by model alphabetically and by travelled distance descending
+            var cars = context
+                .Cars
+                .Where(x => x.Make == "BMW")
+                .OrderBy(x => x.Model)
+                .ThenByDescending(x => x.TravelledDistance)
+                .Select(x => new ExportCarWithAttributesDto
+                {
+                    Id=x.Id,
+                    Model=x.Model,
+                    TravelledDistance=x.TravelledDistance
+                })
+                .ToArray();
+            
+            StringBuilder sb = new StringBuilder();
+            var namespaces = new XmlSerializerNamespaces();
+            namespaces.Add(string.Empty, string.Empty);
+
+            XmlSerializer xml = new XmlSerializer(typeof(ExportCarWithAttributesDto[]), new XmlRootAttribute("cars"));
+            xml.Serialize(new StringWriter(sb), cars, namespaces);
+            return sb.ToString().TrimEnd();
         }
 
         public static string GetCarsWithDistance(CarDealerContext context)
