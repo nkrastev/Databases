@@ -50,8 +50,31 @@ namespace CarDealer
         public static string GetSalesWithAppliedDiscount(CarDealerContext context)
         {
             //Get all sales with information about the car, customer and price of the sale with and without discount.
-            var sales = "";
-            return null;
+            var sales = context
+                .Sales
+                .Select(x => new ExportSalesWithDiscountDto
+                {
+                    CarItem= new ExportCarAttributesDto
+                    {
+                        Make = x.Car.Make,
+                        Model = x.Car.Model,
+                        TravelledDistance = x.Car.TravelledDistance
+                    },
+                    Discount= x.Discount,
+                    CustomerName=x.Customer.Name,
+                    Price=x.Car.PartCars.Sum(z=>z.Part.Price),
+                    PriceWithDiscount= x.Car.PartCars.Sum(z => z.Part.Price)- (x.Car.PartCars.Sum(z => z.Part.Price))*x.Discount*1.0m/100.0m
+                })
+                .ToArray();
+
+            StringBuilder sb = new StringBuilder();
+            var namespaces = new XmlSerializerNamespaces();
+            namespaces.Add(string.Empty, string.Empty);
+
+            XmlSerializer xml = new XmlSerializer(typeof(ExportSalesWithDiscountDto[]), new XmlRootAttribute("sales"));
+            xml.Serialize(new StringWriter(sb), sales, namespaces);
+            return sb.ToString().Trim();
+
         }
 
         //Total Sales by Customer (this is the standard solution, but throws error in VS):... and its OK with Judge :D */
